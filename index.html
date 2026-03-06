@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DocMind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#f7f8fc; --white:#ffffff; --border:#e4e7f0; --border2:#d0d5e8;
+  --text:#1a1d2e; --muted:#7b82a0; --light:#f0f2fa;
+  --blue:#3b5bdb; --blue2:#4c6ef5; --indigo:#6741d9;
+  --grad:linear-gradient(135deg,#3b5bdb 0%,#6741d9 100%);
+  --grad-soft:linear-gradient(135deg,#eef2ff 0%,#f3eeff 100%);
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 12px rgba(0,0,0,.05);
+  --shadow-md:0 4px 16px rgba(59,91,219,.12),0 1px 4px rgba(0,0,0,.06);
+  --r:12px;
+}
+body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; }
+
+nav {
+  background:var(--white); border-bottom:1px solid var(--border);
+  padding:0 32px; height:56px; display:flex; align-items:center;
+  justify-content:space-between; position:sticky; top:0; z-index:50;
+}
+.logo { font-weight:700; font-size:1.15rem; background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.nav-r { display:flex; align-items:center; gap:6px; font-size:.75rem; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+.dot { width:7px; height:7px; border-radius:50%; background:#d0d5e8; }
+.dot.on { background:#40c057; box-shadow:0 0 6px #40c05780; }
+
+.layout { display:grid; grid-template-columns:280px 1fr; flex:1; overflow:hidden; height:calc(100vh - 56px); }
+
+.sidebar {
+  background:var(--white); border-right:1px solid var(--border);
+  overflow-y:auto; padding:20px 16px; display:flex; flex-direction:column; gap:18px;
+}
+.sidebar::-webkit-scrollbar { width:3px; }
+.sidebar::-webkit-scrollbar-thumb { background:var(--border2); border-radius:4px; }
+.s-label { font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+.fl { display:block; font-size:.72rem; color:var(--muted); font-weight:500; margin-bottom:4px; margin-top:10px; }
+.fl:first-child { margin-top:0; }
+
+input[type=text], input[type=password], select, textarea {
+  width:100%; background:var(--light); border:1px solid var(--border);
+  border-radius:8px; padding:8px 11px; font-family:'Outfit',sans-serif;
+  font-size:.82rem; color:var(--text); outline:none;
+  transition:border-color .18s, box-shadow .18s;
+}
+input[type=text]:focus, input[type=password]:focus, select:focus, textarea:focus {
+  border-color:var(--blue2); box-shadow:0 0 0 3px rgba(76,110,245,.1); background:var(--white);
+}
+input::placeholder, textarea::placeholder { color:var(--muted); opacity:.7; }
+select { cursor:pointer; }
+
+.sw { display:flex; flex-direction:column; gap:4px; margin-top:10px; }
+.st { display:flex; justify-content:space-between; align-items:center; }
+.sl { font-size:.72rem; color:var(--muted); font-weight:500; }
+.sn { font-family:'JetBrains Mono',monospace; font-size:.7rem; background:var(--grad-soft); color:var(--blue); padding:1px 7px; border-radius:4px; border:1px solid #c5cff7; }
+input[type=range] {
+  -webkit-appearance:none; width:100%; height:4px; background:var(--border2);
+  border-radius:4px; outline:none; cursor:pointer; border:none; padding:0; box-shadow:none;
+}
+input[type=range]:focus { box-shadow:none; }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:14px; height:14px; border-radius:50%;
+  background:var(--grad); cursor:pointer; box-shadow:0 1px 4px rgba(59,91,219,.3);
+}
+
+.btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  gap:6px; padding:9px 16px; border-radius:9px; font-family:'Outfit',sans-serif;
+  font-weight:500; font-size:.82rem; cursor:pointer; border:none; transition:all .18s; white-space:nowrap;
+}
+.bp { background:var(--grad); color:#fff; width:100%; box-shadow:var(--shadow-md); }
+.bp:hover { opacity:.9; transform:translateY(-1px); }
+.bp:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.bo { background:var(--white); border:1px solid var(--border2); color:var(--muted); }
+.bo:hover { border-color:var(--blue2); color:var(--blue); }
+.br { background:#fff5f5; border:1px solid #ffc9c9; color:#e03131; }
+.br:hover { background:#ffe3e3; }
+
+.flist { display:flex; flex-direction:column; gap:5px; }
+.fitem {
+  display:flex; align-items:center; gap:8px; padding:7px 10px;
+  border:1px solid var(--border); border-radius:8px; font-size:.74rem;
+  color:var(--muted); cursor:pointer; transition:all .15s; background:var(--light);
+}
+.fitem:hover { border-color:var(--blue2); color:var(--text); background:var(--white); }
+.fitem.sel { border-color:var(--blue2); color:var(--blue); background:#eef2ff; }
+.fnum { font-family:'JetBrains Mono',monospace; font-size:.65rem; font-weight:600; color:var(--blue); min-width:16px; }
+.fname { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fext { font-family:'JetBrains Mono',monospace; font-size:.6rem; padding:1px 5px; border-radius:4px; text-transform:uppercase; font-weight:500; }
+.ep { background:#fff0ee; color:#e8512a; }
+.et { background:#eef2ff; color:var(--blue); }
+.ed { background:#ebfbee; color:#2f9e44; }
+
+.main { display:flex; flex-direction:column; overflow:hidden; background:var(--bg); }
+
+.uzone {
+  margin:20px 24px 0; border:2px dashed var(--border2); border-radius:var(--r);
+  padding:24px; text-align:center; cursor:pointer; transition:all .2s; background:var(--white);
+}
+.uzone:hover, .uzone.drag { border-color:var(--blue2); background:#f5f7ff; }
+.uzone input { display:none; }
+.ui { font-size:1.8rem; margin-bottom:6px; }
+.ut { font-weight:600; font-size:.95rem; }
+.us { font-size:.75rem; color:var(--muted); margin-top:3px; }
+.utags { display:flex; gap:6px; justify-content:center; margin-top:10px; }
+.utag { padding:2px 10px; border-radius:20px; font-size:.65rem; font-family:'JetBrains Mono',monospace; border:1px solid var(--border2); color:var(--muted); }
+
+.pbar {
+  display:flex; align-items:center; gap:10px; padding:10px 24px;
+  background:var(--white); border-bottom:1px solid var(--border); flex-wrap:wrap;
+}
+.pbar .btn { width:auto; padding:7px 20px; }
+.stats { display:flex; gap:8px; margin-left:auto; flex-wrap:wrap; }
+.stat { font-family:'JetBrains Mono',monospace; font-size:.65rem; padding:3px 10px; border-radius:20px; border:1px solid var(--border2); color:var(--muted); }
+.stat.on { border-color:#b2f2bb; color:#2f9e44; background:#ebfbee; }
+.stat.bl { border-color:#c5cff7; color:var(--blue); background:#eef2ff; }
+
+.chat {
+  flex:1; overflow-y:auto; padding:24px;
+  display:flex; flex-direction:column; gap:20px;
+}
+.chat::-webkit-scrollbar { width:4px; }
+.chat::-webkit-scrollbar-thumb { background:var(--border2); border-radius:4px; }
+
+.empty {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:12px; text-align:center; padding:40px;
+}
+.eicon {
+  width:56px; height:56px; border-radius:16px; background:var(--grad-soft);
+  display:flex; align-items:center; justify-content:center; font-size:1.5rem;
+  border:1px solid #c5cff7;
+}
+.etitle { font-weight:700; font-size:1.1rem; }
+.esub { font-size:.82rem; color:var(--muted); max-width:300px; line-height:1.6; }
+.chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:6px; }
+.chip {
+  padding:6px 14px; border-radius:20px; font-size:.75rem;
+  border:1px solid var(--border2); color:var(--muted); cursor:pointer;
+  transition:all .15s; background:var(--white);
+}
+.chip:hover { border-color:var(--blue2); color:var(--blue); transform:translateY(-1px); box-shadow:var(--shadow); }
+
+.qa { display:flex; flex-direction:column; gap:10px; animation:up .3s ease; }
+@keyframes up { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+
+.qb {
+  align-self:flex-end; max-width:65%; background:var(--grad); color:#fff;
+  padding:10px 16px; border-radius:14px 14px 3px 14px;
+  font-size:.88rem; line-height:1.5; box-shadow:var(--shadow-md);
+}
+
+.ac {
+  background:var(--white); border:1px solid var(--border);
+  border-radius:3px 14px 14px 14px; padding:16px 18px;
+  max-width:80%; box-shadow:var(--shadow); position:relative;
+}
+.ac::before {
+  content:''; position:absolute; top:0; left:0;
+  width:3px; height:100%; background:var(--grad); border-radius:3px 0 0 3px;
+}
+.at { font-size:.88rem; line-height:1.7; }
+.at .hl { background:#fff3bf; border-radius:3px; padding:0 2px; color:#864d0e; }
+.am {
+  display:flex; gap:8px; margin-top:10px; padding-top:10px;
+  border-top:1px solid var(--border); flex-wrap:wrap; align-items:center;
+}
+.tag { font-family:'JetBrains Mono',monospace; font-size:.62rem; padding:2px 8px; border-radius:5px; border:1px solid var(--border2); color:var(--muted); }
+.tag.bl { border-color:#c5cff7; color:var(--blue); background:#eef2ff; }
+.tag.gr { border-color:#b2f2bb; color:#2f9e44; background:#ebfbee; }
+
+.stog {
+  display:flex; align-items:center; gap:5px; font-size:.73rem; color:var(--muted);
+  cursor:pointer; margin-top:8px; user-select:none; width:fit-content; transition:color .15s;
+}
+.stog:hover { color:var(--blue); }
+.stog svg { transition:transform .25s; }
+.stog.open svg { transform:rotate(90deg); }
+.spanel { display:none; flex-direction:column; gap:8px; margin-top:8px; }
+.spanel.open { display:flex; }
+.chunk {
+  padding:10px 12px; background:var(--light); border-radius:8px;
+  border-left:3px solid var(--blue2); font-family:'JetBrains Mono',monospace;
+  font-size:.72rem; color:var(--muted); line-height:1.6;
+}
+.ch { display:flex; justify-content:space-between; margin-bottom:6px; }
+.cf { color:var(--blue); font-size:.65rem; font-weight:500; }
+.cn { font-size:.6rem; background:#eef2ff; color:var(--blue); padding:1px 6px; border-radius:4px; }
+
+.dots { display:flex; gap:5px; padding:6px 0; align-items:center; }
+.d { width:7px; height:7px; border-radius:50%; animation:bon 1.1s ease-in-out infinite; }
+.d:nth-child(1) { background:var(--blue); }
+.d:nth-child(2) { background:var(--indigo); animation-delay:.18s; }
+.d:nth-child(3) { background:#ae3ec9; animation-delay:.36s; }
+@keyframes bon { 0%,80%,100%{transform:translateY(0);opacity:.5;}40%{transform:translateY(-6px);opacity:1;} }
+
+.ibar {
+  padding:14px 24px; background:var(--white);
+  border-top:1px solid var(--border); display:flex; flex-direction:column; gap:8px;
+}
+.irow { display:flex; gap:8px; align-items:flex-end; }
+.qi {
+  flex:1; background:var(--light); border:1px solid var(--border);
+  border-radius:10px; padding:10px 14px; font-family:'Outfit',sans-serif;
+  font-size:.88rem; color:var(--text); resize:none; min-height:42px;
+  max-height:110px; outline:none; transition:border-color .18s, box-shadow .18s; line-height:1.5;
+}
+.qi:focus { border-color:var(--blue2); box-shadow:0 0 0 3px rgba(76,110,245,.1); background:var(--white); }
+.qi::placeholder { color:var(--muted); }
+.send {
+  width:42px; height:42px; border-radius:10px; background:var(--grad);
+  border:none; color:#fff; cursor:pointer; display:flex; align-items:center;
+  justify-content:center; flex-shrink:0; transition:all .18s; box-shadow:var(--shadow-md);
+}
+.send:hover { opacity:.9; transform:translateY(-1px); }
+.send:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+.iacts { display:flex; gap:8px; align-items:center; }
+.iacts .btn { width:auto; padding:5px 12px; font-size:.72rem; }
+
+.sc { background:var(--light); border:1px solid var(--border); border-radius:8px; padding:10px 13px; }
+.sn2 { font-size:.7rem; font-weight:600; color:var(--blue); font-family:'JetBrains Mono',monospace; margin-bottom:4px; }
+.st2 { font-size:.78rem; color:var(--muted); line-height:1.6; }
+
+.ov { position:fixed; inset:0; background:rgba(26,29,46,.45); backdrop-filter:blur(3px); z-index:100; display:none; align-items:center; justify-content:center; }
+.ov.open { display:flex; }
+.modal { background:var(--white); border-radius:16px; padding:28px; max-width:460px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.15); animation:pop .22s ease; }
+@keyframes pop { from{transform:scale(.95);opacity:0;}to{transform:scale(1);opacity:1;} }
+.mtitle { font-weight:700; font-size:1rem; margin-bottom:4px; }
+.msub { font-size:.78rem; color:var(--muted); margin-bottom:16px; }
+.mbody { display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto; }
+.mfoot { margin-top:16px; }
+
+.toast {
+  position:fixed; bottom:22px; right:22px; background:var(--white);
+  border:1px solid var(--border2); border-radius:10px; padding:10px 16px;
+  font-size:.8rem; display:flex; align-items:center; gap:8px;
+  box-shadow:0 4px 20px rgba(0,0,0,.1); transform:translateY(60px);
+  opacity:0; transition:all .25s; z-index:200;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">DocMind</span>
+  <div class="nav-r">
+    <div class="dot" id="dot"></div>
+    <span id="stxt">not ready</span>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+
+    <div>
+      <div class="s-label">API & Model</div>
+      <label class="fl">Groq API Key</label>
+      <input type="password" id="apiKey" placeholder="gsk_..."/>
+      <label class="fl">Model</label>
+      <select id="model">
+        <option value="llama-3.1-8b-instant">Llama 3.1 8B — Fast</option>
+        <option value="llama-3.3-70b-versatile">Llama 3.3 70B — Smart</option>
+        <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+        <option value="gemma2-9b-it">Gemma2 9B</option>
+      </select>
+      <div class="sw">
+        <div class="st"><span class="sl">Temperature</span><span class="sn" id="tv">0.0</span></div>
+        <input type="range" id="tr" min="0" max="1" step="0.1" value="0"/>
+      </div>
+    </div>
+
+    <div>
+      <div class="s-label">Chunking</div>
+      <label class="fl">Strategy</label>
+      <select id="strategy">
+        <option value="recursive">Recursive</option>
+        <option value="character">Character</option>
+        <option value="semantic">Sentence (Semantic)</option>
+      </select>
+      <div id="cc">
+        <div class="sw">
+          <div class="st"><span class="sl">Chunk Size</span><span class="sn" id="sv">500</span></div>
+          <input type="range" id="sr" min="100" max="2000" step="50" value="500"/>
+        </div>
+        <div class="sw">
+          <div class="st"><span class="sl">Overlap</span><span class="sn" id="ov2">50</span></div>
+          <input type="range" id="or" min="0" max="500" step="10" value="50"/>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="s-label">Embedding</div>
+      <label class="fl">HuggingFace Model</label>
+      <select id="em">
+        <option value="sentence-transformers/all-MiniLM-L6-v2">all-MiniLM-L6-v2</option>
+        <option value="sentence-transformers/all-mpnet-base-v2">all-mpnet-base-v2</option>
+        <option value="sentence-transformers/paraphrase-MiniLM-L6-v2">paraphrase-MiniLM</option>
+      </select>
+      <div class="sw">
+        <div class="st"><span class="sl">Top K</span><span class="sn" id="kv">10</span></div>
+        <input type="range" id="kr" min="1" max="20" step="1" value="10"/>
+      </div>
+    </div>
+
+    <div>
+      <div class="s-label">Files</div>
+      <div class="flist" id="flist"><span style="font-size:.72rem;color:var(--muted)">No files yet</span></div>
+    </div>
+
+    <button class="btn br" onclick="clearAll()">Clear Everything</button>
+  </aside>
+
+  <main class="main">
+    <div class="uzone" id="zone" onclick="document.getElementById('fi').click()">
+      <div class="ui">&#8593;</div>
+      <div class="ut">Drop files or click to upload</div>
+      <div class="us">Multiple files — PDF, DOCX, TXT</div>
+      <div class="utags">
+        <span class="utag">PDF</span><span class="utag">DOCX</span><span class="utag">TXT</span>
+      </div>
+      <input type="file" id="fi" multiple accept=".pdf,.docx,.txt" onchange="addFiles(this.files)"/>
+    </div>
+
+    <div class="pbar">
+      <button class="btn bp" id="pb" onclick="process()" style="width:auto;padding:7px 20px;">Process Files</button>
+      <button class="btn bo" id="sb" onclick="openSum()" style="display:none;width:auto;padding:7px 16px;">View Summaries</button>
+      <div class="stats">
+        <span class="stat" id="sf">0 files</span>
+        <span class="stat" id="sc">0 chunks</span>
+        <span class="stat" id="sr2">not ready</span>
+      </div>
+    </div>
+
+    <div class="chat" id="chat">
+      <div class="empty" id="empty">
+        <div class="eicon">&#128196;</div>
+        <div class="etitle">Ask anything about your documents</div>
+        <div class="esub">Upload files, configure settings, click Process Files — then ask away.</div>
+        <div class="chips">
+          <div class="chip" onclick="useChip(this)">What is file 1 about?</div>
+          <div class="chip" onclick="useChip(this)">Summarize all files</div>
+          <div class="chip" onclick="useChip(this)">Key points from file 2</div>
+          <div class="chip" onclick="useChip(this)">Compare file 1 and file 2</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ibar">
+      <div class="irow">
+        <textarea class="qi" id="qi" placeholder="Ask a question... (e.g. What does file 1 say about...)" rows="1" onkeydown="onKey(event)" oninput="rsz(this)"></textarea>
+        <button class="send" id="sb2" onclick="ask()">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="iacts">
+        <button class="btn bo" onclick="dlTxt()">Download TXT</button>
+        <button class="btn bo" onclick="dlPdf()">Download PDF</button>
+        <button class="btn br" onclick="clearChat()">Clear Chat</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="ov" id="ov">
+  <div class="modal">
+    <div class="mtitle">Document Summaries</div>
+    <div class="msub">Auto-generated summary per file.</div>
+    <div class="mbody" id="mb"></div>
+    <div class="mfoot"><button class="btn bo" onclick="closeSum()" style="width:100%">Close</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API='http://localhost:8000';
+let files=[],history=[],summaries={},ready=false;
+
+// sliders
+const bind=(r,v,dp=0)=>document.getElementById(r).oninput=e=>document.getElementById(v).textContent=parseFloat(e.target.value).toFixed(dp);
+bind('tr','tv',1); bind('sr','sv'); bind('or','ov2'); bind('kr','kv');
+document.getElementById('strategy').onchange=e=>{
+  const s=e.target.value==='semantic';
+  document.getElementById('cc').style.opacity=s?'0.4':'1';
+  document.getElementById('cc').style.pointerEvents=s?'none':'';
+};
+
+// drag drop
+const zone=document.getElementById('zone');
+zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');addFiles(e.dataTransfer.files);});
+
+function addFiles(fl){
+  for(const f of fl) if(!files.find(x=>x.name===f.name)) files.push(f);
+  renderFiles();
+  document.getElementById('sf').textContent=`${files.length} file(s)`;
+  toast(`${fl.length} file(s) added`);
+}
+
+function renderFiles(){
+  const el=document.getElementById('flist');
+  if(!files.length){el.innerHTML='<span style="font-size:.72rem;color:var(--muted)">No files yet</span>';return;}
+  el.innerHTML=files.map((f,i)=>{
+    const ext=f.name.split('.').pop().toLowerCase();
+    const cls=ext==='pdf'?'ep':ext==='txt'?'et':'ed';
+    return`<div class="fitem" id="fi${i+1}" onclick="pickFile(${i+1})">
+      <span class="fnum">${i+1}</span>
+      <span class="fname">${f.name}</span>
+      <span class="fext ${cls}">${ext}</span>
+    </div>`;
+  }).join('');
+}
+
+function pickFile(n){
+  document.querySelectorAll('.fitem').forEach(x=>x.classList.remove('sel'));
+  document.getElementById(`fi${n}`).classList.add('sel');
+  document.getElementById('qi').value=`What is file ${n} about?`;
+  rsz(document.getElementById('qi'));
+}
+
+async function process(){
+  const key=document.getElementById('apiKey').value.trim();
+  if(!key){toast('Enter Groq API key',true);return;}
+  if(!files.length){toast('Upload at least one file',true);return;}
+  const btn=document.getElementById('pb');
+  btn.textContent='Processing...';btn.disabled=true;
+  const fd=new FormData();
+  files.forEach(f=>fd.append('files',f));
+  fd.append('api_key',key);
+  fd.append('model',document.getElementById('model').value);
+  fd.append('temperature',document.getElementById('tr').value);
+  fd.append('chunk_strategy',document.getElementById('strategy').value);
+  fd.append('chunk_size',document.getElementById('sr').value);
+  fd.append('chunk_overlap',document.getElementById('or').value);
+  fd.append('top_k',document.getElementById('kr').value);
+  fd.append('embed_model',document.getElementById('em').value);
+  try{
+    const r=await fetch(`${API}/process`,{method:'POST',body:fd});
+    const d=await r.json();
+    if(d.success){
+      ready=true;summaries=d.summaries||{};
+      document.getElementById('sc').textContent=`${d.chunks} chunks`;
+      document.getElementById('sc').className='stat bl';
+      document.getElementById('sr2').textContent='ready';
+      document.getElementById('sr2').className='stat on';
+      document.getElementById('dot').className='dot on';
+      document.getElementById('stxt').textContent='ready';
+      document.getElementById('sb').style.display='';
+      toast(`Done! ${d.chunks} chunks indexed`);
+    }else{toast(d.error||'Failed',true);}
+  }catch{toast('Cannot connect — is the server running?',true);}
+  btn.textContent='Process Files';btn.disabled=false;
+}
+
+async function ask(){
+  const q=document.getElementById('qi').value.trim();
+  if(!q)return;
+  if(!ready){toast('Process files first',true);return;}
+  document.getElementById('empty').style.display='none';
+  const chat=document.getElementById('chat');
+  const item=document.createElement('div');
+  item.className='qa';
+  item.innerHTML=`<div class="qb">${esc(q)}</div>
+    <div class="ac"><div class="dots"><div class="d"></div><div class="d"></div><div class="d"></div></div></div>`;
+  chat.appendChild(item);
+  chat.scrollTop=chat.scrollHeight;
+  document.getElementById('qi').value='';
+  document.getElementById('qi').style.height='';
+  document.getElementById('sb2').disabled=true;
+  try{
+    const r=await fetch(`${API}/ask`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        question:q,
+        api_key:document.getElementById('apiKey').value.trim(),
+        model:document.getElementById('model').value,
+        temperature:parseFloat(document.getElementById('tr').value),
+        top_k:parseInt(document.getElementById('kr').value)
+      })
+    });
+    const d=await r.json();
+    const card=item.querySelector('.ac');
+    if(d.success){
+      card.innerHTML=`
+        <div class="at">${highlight(d.answer,q)}</div>
+        <div class="am">
+          <span class="tag bl">${d.model}</span>
+          <span class="tag gr">${d.chunks.length} sources</span>
+          ${d.file_filter?`<span class="tag">file ${d.file_filter}</span>`:''}
+        </div>
+        <div class="stog" onclick="tog(this)">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          View top 2 source chunks
+        </div>
+        <div class="spanel">
+          ${d.chunks.map((c,i)=>`<div class="chunk">
+            <div class="ch"><span class="cf">${c.filename}</span><span class="cn">Chunk ${i+1}</span></div>
+            ${esc(c.content.substring(0,500))}${c.content.length>500?'...':''}
+          </div>`).join('')}
+        </div>`;
+      history.push({q,a:d.answer,model:d.model});
+    }else{card.innerHTML=`<div class="at" style="color:#e03131">${d.error}</div>`;}
+  }catch{item.querySelector('.ac').innerHTML=`<div class="at" style="color:#e03131">Cannot reach backend. Run: python api.py</div>`;}
+  document.getElementById('sb2').disabled=false;
+  chat.scrollTop=chat.scrollHeight;
+}
+
+function tog(el){el.classList.toggle('open');el.nextElementSibling.classList.toggle('open');}
+
+function highlight(text,q){
+  const words=q.toLowerCase().split(' ').filter(w=>w.length>4);
+  let out=esc(text);
+  words.forEach(w=>{out=out.replace(new RegExp(`(${w})`,'gi'),'<span class="hl">$1</span>');});
+  return out;
+}
+
+function openSum(){
+  document.getElementById('mb').innerHTML=Object.entries(summaries).map(([f,s])=>
+    `<div class="sc"><div class="sn2">${f}</div><div class="st2">${s}</div></div>`
+  ).join('')||'<span style="color:var(--muted);font-size:.8rem">No summaries yet.</span>';
+  document.getElementById('ov').classList.add('open');
+}
+function closeSum(){document.getElementById('ov').classList.remove('open');}
+
+function dlTxt(){
+  if(!history.length){toast('No chat to download',true);return;}
+  let t='DocMind Chat History\n'+'='.repeat(36)+'\n\n';
+  history.forEach((h,i)=>{t+=`Q${i+1}: ${h.q}\nA: ${h.a}\n[${h.model}]\n\n`;});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));
+  a.download='docmind_chat.txt';a.click();
+  toast('TXT downloaded');
+}
+
+function dlPdf(){
+  if(!history.length){toast('No chat to download',true);return;}
+  const w=window.open('','_blank');
+  let html=`<html><head><title>DocMind</title><style>
+    body{font-family:sans-serif;padding:32px;max-width:720px;margin:auto;}
+    h1{color:#3b5bdb;border-bottom:2px solid #3b5bdb;padding-bottom:8px;margin-bottom:20px;}
+    .q{background:#eef2ff;padding:10px 14px;border-radius:8px;font-weight:600;margin-bottom:4px;}
+    .a{background:#f8f9fa;padding:10px 14px;border-radius:8px;margin-bottom:6px;line-height:1.6;}
+    .m{font-size:11px;color:#888;margin-bottom:18px;}
+  </style></head><body><h1>DocMind Chat History</h1>`;
+  history.forEach((h,i)=>{html+=`<div class="q">Q${i+1}: ${h.q}</div><div class="a">${h.a}</div><div class="m">${h.model}</div>`;});
+  html+='</body></html>';
+  w.document.write(html);w.document.close();w.print();
+  toast('PDF print dialog opened');
+}
+
+function clearChat(){
+  history=[];
+  document.getElementById('chat').innerHTML=`<div class="empty" id="empty">
+    <div class="eicon">&#128196;</div>
+    <div class="etitle">Chat cleared</div>
+    <div class="esub">Ask a new question below.</div>
+  </div>`;
+  toast('Chat cleared');
+}
+
+function clearAll(){
+  files=[];history=[];summaries={};ready=false;
+  renderFiles();clearChat();
+  document.getElementById('sf').textContent='0 files';
+  document.getElementById('sc').textContent='0 chunks';document.getElementById('sc').className='stat';
+  document.getElementById('sr2').textContent='not ready';document.getElementById('sr2').className='stat';
+  document.getElementById('dot').className='dot';
+  document.getElementById('stxt').textContent='not ready';
+  document.getElementById('sb').style.display='none';
+  toast('Everything cleared');
+}
+
+function useChip(el){
+  document.getElementById('qi').value=el.textContent;
+  rsz(document.getElementById('qi'));
+  document.getElementById('qi').focus();
+}
+
+function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask();}}
+function rsz(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,110)+'px';}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.innerHTML=`<span style="color:${err?'#e03131':'#2f9e44'}">${err?'✗':'✓'}</span> ${msg}`;
+  t.className='toast show';
+  setTimeout(()=>t.className='toast',3000);
+}
+</script>
+</body>
+</html>
