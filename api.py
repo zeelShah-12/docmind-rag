@@ -163,4 +163,4 @@ def health():
 if __name__ == "__main__":
     import uvicorn
     print("\n  DocMind running at  →  http://localhost:8000\n")
-    uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("api:app", host="0.0.0.0", port=10000, reload=True)
